@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>JQuery Modification et Hierarchie</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="css/app.css" />
+</head>
+
+<body>
+
+    <div class="container content">
+        <form id="produitForm" class="needs-validation" novalidate>
+            <div class="form-row">
+                <div class=" col-8">
+                    <label>Adresse</label>
+                    <input name="produit" class="form-control" required />
+                    <div class="invalid-feedback">
+                        un produit est obligatoire
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <br>
+                    <input type="submit" value="Valider" class="btn btn-primary btn-block" />
+                </div>
+            </div>
+        </form>
+        <div class="row mt-3 p-3" id="fiche">
+        </div>
+        <svg id="barcode"></svg>
+    </div>
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+        <script src="JsBarcode.all.min.js"></script>
+    <script>
+
+
+        $("#produitForm").submit(function (e) {
+            e.preventDefault();
+
+            $(this).addClass('was-validated')
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                return;
+            }
+
+            var produit = $(this).find('[name="produit"]');
+
+            $.ajax({
+                url: ('https://world.openfoodfacts.org/cgi/search.pl?'),
+
+                data: {
+                    search_terms: $(this).find('[name="produit"]').val(),
+                    search_simple: 1,
+                    action: 'process',
+                    json: 1,
+                },
+                success: function (data) {
+                    // $("#fiche").empty();
+                    var ficheProduit = data.products;
+
+                    $.each(ficheProduit, function () {
+                        var newcard =
+                            '<div class="card col-3"><img class="card-img-top" src="' + this.image_small_url +
+                            '" alt="card image cap"><div class="card-body"><p class="card-text">'
+                            + this.product_name + '</p></div></div>'
+
+                        JsBarcode('#barcode',this.codes_tags[1])
+
+                        $("#fiche").append(newcard);
+                        //$("#barcode").append(code);
+                    })
+                }
+            })
+        })
+
+        // success: function(data) {
+        //     $("#resultat").empty();
+
+        //     var enregistrements = data.products;
+
+        //     $.each(enregistrements, function () {
+
+        //         var newcard = '<div class="card col-2 m-2" style="width: 18rem;"><img class="card-img-top w-100" src="' +
+        //             this.selected_images.front.thumb.fr + '" alt=""><div class="card-body"><p class="card-text">'
+        //             + this.product_name + '<br>' + this.product_name + '</p></div></div>'
+        //         $("#resultat").append(newcard);
+        //     })
+        // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- FIN -->
