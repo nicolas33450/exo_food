@@ -22,7 +22,6 @@
                         un produit est obligatoire
                     </div>
                 </div>
-
                 <div class="col-12">
                     <br>
                     <input type="submit" value="Valider" class="btn btn-primary btn-block" />
@@ -31,87 +30,155 @@
         </form>
         <div class="row mt-3 p-3" id="fiche">
         </div>
-        <svg id="barcode"></svg>
-    </div>
-    <!-- JS -->
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"></script>
-        <script src="JsBarcode.all.min.js"></script>
-    <script>
 
+        <div class="modal" tabindex="-1" role="dialog" id="modalProduct">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="titreProduit" class="modal-title"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-8">
+                                    <h6> Decription </h6>
+                                    <p id="description"></p>
+                                    <h6> Ingredients </h6>
+                                    <p id="Ingredients"></p>
+                                    <h6> Allergenes </h6>
+                                    <p id="Allergenes"></p>
+                                </div>
 
-        $("#produitForm").submit(function (e) {
-            e.preventDefault();
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <img id="imageUrl">
+                                    <img id="imageFrontUrl">
+                                    <img id="imageIngredientUrl">
+                                    <img id="imageNutritionUrl">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- JS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+        <script src="barcode.js"></script>
 
-            $(this).addClass('was-validated')
-            if (!this.checkValidity()) {
-                e.stopPropagation();
-                return;
-            }
+        <script>
 
-            var produit = $(this).find('[name="produit"]');
+            var page = 1
 
-            $.ajax({
-                url: ('https://world.openfoodfacts.org/cgi/search.pl?'),
+            $(window).scroll(function () {
 
-                data: {
-                    search_terms: $(this).find('[name="produit"]').val(),
-                    search_simple: 1,
-                    action: 'process',
-                    json: 1,
-                },
-                success: function (data) {
-                    // $("#fiche").empty();
-                    var ficheProduit = data.products;
+                if ($(window).scrollTop() + $(window).height() == $(document).height()) {
+                    //alert("bottom!");
+                    $.ajax({
+                        url: ('https://world.openfoodfacts.org/cgi/search.pl?'),
 
-                    $.each(ficheProduit, function () {
-                        var newcard =
-                            '<div class="card col-3"><img class="card-img-top" src="' + this.image_small_url +
-                            '" alt="card image cap"><div class="card-body"><p class="card-text">'
-                            + this.product_name + '</p></div></div>'
+                        data: {
+                            search_terms: $('#produitForm').find('[name="produit"]').val(),
+                            search_simple: 1,
+                            action: 'process',
+                            json: 1,
+                            page: page,
+                        },
 
-                        JsBarcode('#barcode',this.codes_tags[1])
+                        success: function (data) {
 
-                        $("#fiche").append(newcard);
-                        //$("#barcode").append(code);
+                            var ficheProduit = data.products;
+                            page = data.page + 1;
+
+                            $.each(ficheProduit, function () {
+
+                                var format = ''
+                                var taille = this.code.lenght
+                                var code = this.code
+
+                                if (taille == 13) {
+                                    code = code.substr(0, 12)
+                                    format = "ean13";
+                                }
+                                else if (taille == 8) {
+                                    format = "ean8";
+                                }
+
+                                var newcard =
+                                    $('<div class="card col-3 mx-auto"><img class="mx-auto d-block img-thumbnail card-img-top w-50" src="' + this.selected_images.front.thumb.fr +
+                                        '" alt="card image cap"><div class="card-body"><svg class="barcode"jsbarcode-format="' + format + '"jsbarcode-value="'
+                                        + code + '"jsbarcode-textmargin="0"jsbarcode-fontoptions="bold"></svg ><p class="card-text">'
+                                        + this.product_name + '</p><button type="submit" class="btn btn-info"data-toggle="modal" data-target="#modalProduct">Détails</button></div></div> ')
+
+                                JsBarcode(".barcode").init();
+                                $("#fiche").append(newcard);
+
+                                newcard.find(".btn").click(function () {                                   
+
+                                    $("#titreProduit").data()
+                                })
+
+                            })
+                        }
                     })
                 }
+            });
+
+            $("#produitForm").submit(function (e) {
+                e.preventDefault();
+
+                $(this).addClass('was-validated')
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    return;
+                }
+
+                var produit = $(this).find('[name="produit"]');
+
+                $.ajax({
+                    url: ('https://world.openfoodfacts.org/cgi/search.pl?'),
+
+                    data: {
+                        search_terms: $(this).find('[name="produit"]').val(),
+                        search_simple: 1,
+                        action: 'process',
+                        json: 1,
+                    },
+
+                    success: function (data) {
+                        $("#fiche").empty();
+                        var ficheProduit = data.products;
+
+                        $.each(ficheProduit, function () {
+
+                            var newcard =
+                                $('<div class="card col-3"><img class="mx-auto d-block img-thumbnail card-img-top w-50" src="' + this.selected_images.front.thumb.fr +
+                                '" alt="card image cap"><div class="card-body"><p class="card-text"><svg class="barcode"jsbarcode-format="ean13"jsbarcode-value="'
+                                + this.code + '"jsbarcode-textmargin="0"jsbarcode-fontoptions="bold"></svg > '
+                                + this.product_name + '</p><button type="submit" class="btn btn-info"data-toggle="modal" data-target="#modalProduct">Détails</button></div></div>')
+
+                            JsBarcode(".barcode").init();
+                            $("#fiche").append(newcard);
+
+
+                        })
+                    }
+                })
+
             })
-        })
 
-        // success: function(data) {
-        //     $("#resultat").empty();
-
-        //     var enregistrements = data.products;
-
-        //     $.each(enregistrements, function () {
-
-        //         var newcard = '<div class="card col-2 m-2" style="width: 18rem;"><img class="card-img-top w-100" src="' +
-        //             this.selected_images.front.thumb.fr + '" alt=""><div class="card-body"><p class="card-text">'
-        //             + this.product_name + '<br>' + this.product_name + '</p></div></div>'
-        //         $("#resultat").append(newcard);
-        //     })
-        // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    </script>
+        </script>
 
 </body>
 
